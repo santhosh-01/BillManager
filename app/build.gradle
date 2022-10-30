@@ -1,7 +1,12 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+
+    // Hilt Dagger for dependency injection
+    id("dagger.hilt.android.plugin")
 }
+
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdk 32
@@ -47,6 +52,21 @@ dependencies {
 
     // For Splash Screen API
     implementation 'androidx.core:core-splashscreen:1.0.0'
+
+    // Room
+    implementation "androidx.room:room-runtime:2.4.0-rc01"
+    kapt "androidx.room:room-compiler:2.4.0-rc01"
+
+    // Coroutine Lifecycle Scopes
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
+
+    // Kotlin Extensions and Coroutines support for Room
+    implementation "androidx.room:room-ktx:2.2.5"
+
+    // Hilt Dagger Dependencies
+    implementation("com.google.dagger:hilt-android:2.38.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.38.1")
 
 
 }

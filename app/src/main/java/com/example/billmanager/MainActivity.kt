@@ -1,33 +1,47 @@
 package com.example.billmanager
 
+import android.app.Activity
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.KeyEvent
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.CalendarView
-import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.billmanager.databinding.ActivityMainBinding
-import com.google.android.material.snackbar.Snackbar
+import com.example.billmanager.entity.Quantity
+import com.example.billmanager.viewmodel.QuantityViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.DateFormatSymbols
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var quantityViewModel: QuantityViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         binding = ActivityMainBinding.inflate(layoutInflater)
+        quantityViewModel = ViewModelProvider(this)[QuantityViewModel::class.java]
         setContentView(binding.root)
 
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
         val formatted = current.format(formatter)
+        val currMonth = DateFormatSymbols().months[current.month.value].toString()
         binding.todayDate.text = "Today's Date is $formatted" // No I18
         binding.selectedDate.text = "Selected Date is $formatted" // No I18
+        binding.totalQuantityThisMonth.text = "Total Quantity for $currMonth is 0 litre" // No I18
 
     }
 
@@ -41,11 +55,29 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
+        binding.quantityInput.setOnKeyListener { v, keyCode, event ->
+            if(event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_ENTER){
+                hideKeyboard(v)
+                v.clearFocus()
+                true
+            }
+            else false
+        }
+
         binding.quantityInput.setOnFocusChangeListener { v, hasFocus ->
             if (!hasFocus)
             {
-                Snackbar.make(v, "Given Quantity is ${(v as EditText).text} litres", Snackbar.LENGTH_LONG).show()
+                val quantity = Quantity(joined_date = OffsetDateTime.now(), quantity = binding.quantityInput.text.toString().toDouble())
+                lifecycleScope.launch {
+                    quantityViewModel.insertQuantity(quantity)
+                }
             }
         }
+    }
+
+    private fun Activity.hideKeyboard(view: View) {
+        val inputMethodManager =
+            getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }
